@@ -1,9 +1,71 @@
 #include<bits/stdc++.h>
 using namespace std;
+#define MAX 9999
 
-//Nodes of Adjancy Linked List
+// Node's Name
 
 char a[26] = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+
+//Stack Node Structure
+
+struct StackNode
+{
+    int data;
+    struct StackNode* next;
+};
+
+//Creating New Node of Stack
+
+struct StackNode* newNode(int data)
+{
+    struct StackNode* stackNode =
+            (struct StackNode*) malloc(sizeof(struct StackNode));
+    stackNode->data = data;
+    stackNode->next = NULL;
+    return stackNode;
+}
+
+//Checking whether Stack is Empty or not
+
+int isEmpty(struct StackNode *root)
+{
+    return !root;
+}
+
+//Pushing into Stack
+
+void push(struct StackNode** root, int data)
+{
+    struct StackNode* stackNode = newNode(data);
+    stackNode->next = *root;
+    *root = stackNode;
+    printf("%d pushed to stack\n", data);
+}
+
+//Pop Function
+
+int pop(struct StackNode** root)
+{
+    if (isEmpty(*root))
+        return INT_MIN;
+    struct StackNode* temp = *root;
+    *root = (*root)->next;
+    int popped = temp->data;
+    free(temp);
+
+    return popped;
+}
+
+//Peek Element in Stack
+
+int peek(struct StackNode* root)
+{
+    if (isEmpty(root))
+        return INT_MIN;
+    return root->data;
+}
+
+//Adjancy Node Structure
 
 struct AdjListNode {
     int dest;
@@ -86,6 +148,58 @@ void Print_Node(struct Graph *G,int V){
     printf("\n");
 }
 
+//Using (Main Depth First Search Function with time of entering and exit) with Stack for Topological Sort
+
+void DFS_VISIT(char *color, struct AdjListNode **P,int *d1,int *d2,int *time, struct Graph* G,int i, struct StackNode** head){
+    if(color[i] == 'w'){
+        struct AdjListNode *B = G->array[i].head;
+        color[i]='g';
+        d1[i] = ++(*time);
+        while(B){
+            if(color[B->dest]=='w'){
+                DFS_VISIT(color,P,d1,d2,time,G,B->dest,head);
+            }
+            B=B->next;
+        }
+    }   color[i] = 'b';
+    d2[i] = ++(*time);
+    push(head,i);
+}
+
+//Using DFS for Topological Sort (DFS Utility Function to mark even unvisited Nodes) Only change is Stack
+
+void DFS(struct Graph* G){
+    struct StackNode *head = NULL;
+    char color[G->V];
+    struct AdjListNode *pi[G->V];
+    int d1[G->V],d2[G->V],i;
+    int time = 0;
+    for(i=0;i<G->V;i++)
+    {
+        color[i] = 'w';
+        pi[i] = NULL;
+        d1[i] = 9999;
+        d2[i] = 9999;
+    }
+    for(i=0;i<G->V;i++){
+        if(color[i] == 'w')
+            DFS_VISIT(color,pi,d1,d2,&time,G,i,&head);
+    }
+    int p;
+    printf("\n Node || Initial Time || Final Time \n");
+    for(p=0;p<G->V;p++)
+    {
+        printf("  %c   ||        %d        ||    %d     \n",a[p],d1[p],d2[p]);
+    }
+
+    //Printing Topological Sorted Stack
+
+    printf("\n Topological Sort \n");
+    for(p=0;p<G->V;p++){
+        printf(" %c -> ",a[pop(&head)]);
+    }
+}
+
 int main(){
     int v;
     printf("\n Enter Number of Nodes in a graph\n");
@@ -96,7 +210,7 @@ int main(){
     struct Graph *G = createGraph(v);
     while(1){
         int s;
-        printf("\n Enter 1 for insertion \n 2 to print \n 3 to exit ");
+        printf("\n Enter 1 for insertion \n 2 to print Topological Sort \n 3 to exit ");
         scanf("%d",&s);
         switch (s){
             case 1:{
@@ -120,8 +234,7 @@ int main(){
                 Print_Graph(G);
                 break;
             }case 2:{
-                printf("\n Your Graph Becomes : \n");
-                Print_Graph(G);
+                DFS(G);
                 break;
             }
             case 3:{
